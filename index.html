@@ -1,0 +1,92 @@
+<html>
+<head>
+<title>Realtime STT Demo</title>
+<style>
+  body { font-family: sans-serif; }
+  #output { margin-top: 20px; border: 1px solid #ccc; padding: 10px; min-height: 100px; }
+  button { padding: 10px 15px; font-size: 16px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<h1>Realtime Speech to Text Demo</h1>
+
+<p>This example demonstrates a basic realtime speech-to-text (STT) functionality using the Web Speech API.</p>
+
+<button id="startButton">Start Listening</button>
+<button id="stopButton" disabled>Stop Listening</button>
+
+<div id="output">Listening will appear here...</div>
+
+<script>
+  const startButton = document.getElementById('startButton');
+  const stopButton = document.getElementById('stopButton');
+  const outputDiv = document.getElementById('output');
+
+  let recognition = null;
+  let recognizing = false;
+
+  // Check if the browser supports the Web Speech API
+  if (!('webkitSpeechRecognition' in window)) {
+    outputDiv.textContent = 'Web Speech API is not supported in this browser.';
+  } else {
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = true; // Enable continuous listening
+    recognition.lang = 'tr-TR'; // Set language to Turkish
+    recognition.interimResults = true; // Get interim results for realtime feedback
+
+    recognition.onstart = () => {
+      recognizing = true;
+      outputDiv.textContent = 'Listening...';
+      startButton.disabled = true;
+      stopButton.disabled = false;
+    };
+
+    recognition.onend = () => {
+      recognizing = false;
+      startButton.disabled = false;
+      stopButton.disabled = true;
+      outputDiv.textContent += '\nStopped listening.';
+    };
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      // Display interim results immediately, and final results when they are available
+      outputDiv.textContent = interimTranscript + finalTranscript;
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      outputDiv.textContent = 'Error: ' + event.error;
+      recognizing = false;
+      startButton.disabled = false;
+      stopButton.disabled = true;
+    };
+
+    startButton.onclick = () => {
+      if (!recognizing) {
+        recognition.start();
+      }
+    };
+
+    stopButton.onclick = () => {
+      if (recognizing) {
+        recognition.stop();
+      }
+    };
+  }
+</script>
+
+</body>
+</html>
